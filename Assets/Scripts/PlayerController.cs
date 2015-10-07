@@ -5,8 +5,9 @@ public class PlayerController : MonoBehaviour {
 
 	public float speed;
 	public float offset_theta;
-	public float height_offset;
+	public float raycast_length;
 
+	private bool is_grounded;
 	private float cosTheta;
 	private float sinTheta;
 	private Rigidbody rb;
@@ -22,6 +23,15 @@ public class PlayerController : MonoBehaviour {
 
 	void FixedUpdate(){
 
+		// Cast a ray downward to see if we're touching the ground
+		is_grounded = Physics.Raycast(transform.position, Vector3.down, raycast_length);
+
+		// If we're on the ground, don't use gravity - it makes you slide down ramps
+		rb.useGravity = !is_grounded;
+		if(is_grounded){
+			rb.velocity = new Vector3(0.0f, rb.velocity.y, 0.0f);
+		}
+
 		if(Input.GetButton("Fire2")){
 			Vector2 screenMovement = new Vector2(
 				((Input.mousePosition.x / Screen.width) - 0.5f) / 0.5f,
@@ -35,6 +45,7 @@ public class PlayerController : MonoBehaviour {
 			);
 
 			transform.position += worldMovement * speed;
+
 		}
 
 	}
