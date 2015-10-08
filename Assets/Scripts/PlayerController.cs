@@ -9,7 +9,6 @@ public class PlayerController : MonoBehaviour {
 	public float height_offset;
 
 	private bool is_grounded;
-	private bool[] keyspressed;
 	private float cosTheta;
 	private float sinTheta;
 	private Vector3 velocity;
@@ -22,14 +21,9 @@ public class PlayerController : MonoBehaviour {
 
 		// We start on the ground
 		is_grounded = true;
-
-		// Initialize array
-		keyspressed = new bool[128];
 	}
 
 	void FixedUpdate(){
-
-		UpdateInputKeys();
 
 		if(is_grounded){
 			bool shouldZeroVelocity = true;
@@ -39,7 +33,7 @@ public class PlayerController : MonoBehaviour {
 				shouldZeroVelocity = false;
 			}
 
-			if(keyspressed[' ']) {
+			if(Input.GetKeyDown("space")) {
 				HandleSpacePressed();
 				shouldZeroVelocity = false;
 			}
@@ -52,6 +46,7 @@ public class PlayerController : MonoBehaviour {
 		}
 
 		transform.position += velocity;
+		correctHeight();
 
 	}
 
@@ -82,6 +77,7 @@ public class PlayerController : MonoBehaviour {
 	void HandleMouseInput(){
 		// Get the top-down (2D) velocity vector
 		Vector2 velocity2D = MouseVectorToWorld() * speed;
+
 		Vector3 temp_position = new Vector3(
 			velocity2D.x + transform.position.x,
 			transform.position.y,
@@ -128,13 +124,16 @@ public class PlayerController : MonoBehaviour {
 		is_grounded = Physics.Raycast(transform.position, Vector3.down, (velocity.y * -1.0f) + height_offset);
 	}
 
-	void UpdateInputKeys(){
-		for(int i = 0; i < 128; i++){
-			keyspressed[i] = false;
-		}
+	void correctHeight(){
+		// Fixes slight clipping bug player has after falling
+		RaycastHit hit;
 
-		foreach(char c in Input.inputString){
-			keyspressed[(int)c] = true;
+		if(Physics.Raycast(transform.position, Vector3.down, out hit, height_offset + 0.3f) && velocity.y < 0){
+			transform.position = new Vector3(
+				transform.position.x,
+				hit.point.y + height_offset,
+				transform.position.z
+			);
 		}
 	}
 
