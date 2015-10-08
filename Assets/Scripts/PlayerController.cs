@@ -52,26 +52,25 @@ public class PlayerController : MonoBehaviour {
 
 	void UpdateTransform(){
 		// Tie the velocity to the timestep making it framerate independent
+		CorrectVelocity();
 		Vector3 next_position = PositionAfterVelocity(velocity);
 
 		// Handle collisions sideways
 		RaycastHit wall_hit;
 		if(Physics.Raycast(transform.position, velocity, out wall_hit, (velocity.magnitude * Time.deltaTime) + 1.0f)){
 
-			Vector3 moveVector = wall_hit.point - transform.position;
-			float magnitude = Mathf.Max(moveVector.magnitude - 1.0f, 0.0f);
-			moveVector = Vector3.ClampMagnitude(moveVector, magnitude);
-
-			next_position = new Vector3(
-				transform.position.x + moveVector.x,
-				next_position.y,
-				next_position.z + moveVector.z
-			);
+			Vector3 projected = wall_hit.normal * Vector3.Dot(velocity, wall_hit.normal);
+			velocity -= projected;
+			next_position = PositionAfterVelocity(velocity);
 		}
 
 		// Apply everything!
 		transform.position = next_position;
 		correctHeight();
+	}
+
+	void CorrectVelocity(){
+		velocity = new Vector3(velocity.x, Mathf.Min(velocity.y, jump_velocity), velocity.z);
 	}
 
 	Vector3 PositionAfterVelocity(Vector3 v){
