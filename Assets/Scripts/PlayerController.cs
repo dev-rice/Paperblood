@@ -119,13 +119,25 @@ public class PlayerController : MonoBehaviour {
 			// We will be hitting the ground, therefore we should clamp to it
 			is_grounded = true;
 
-			float vert_velocity = (ground_hit.point.y - transform.position.y + height_offset)/Time.deltaTime;
+			float y_velocity = (ground_hit.point.y - transform.position.y + height_offset)/Time.deltaTime;
+
+			Vector2 x_forward = new Vector2(velocity2D.x, 0.0f);
+			Vector2 x_vector = new Vector2(velocity2D.x, y_velocity);
+
+			Vector2 z_forward = new Vector2(velocity2D.y, 0.0f);
+			Vector2 z_vector = new Vector2(velocity2D.y, y_velocity);
+
+			float theta_x = Vector2.Angle(x_forward, x_vector);
+			float theta_z = Vector2.Angle(z_forward, z_vector);
+
+			float x_velocity = velocity2D.x * Mathf.Cos(Mathf.Deg2Rad * theta_x);
+			float z_velocity = velocity2D.y * Mathf.Cos(Mathf.Deg2Rad * theta_z);
 
 			// TODO change the x/z velocities to be scalar of the amount traveled upward
 			Vector3 temp_velocity = new Vector3(
-				velocity2D.x,
-				vert_velocity,
-				velocity2D.y
+				x_velocity,
+				y_velocity,
+				z_velocity
 			);
 
 			velocity = temp_velocity;
