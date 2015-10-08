@@ -4,7 +4,7 @@ using System.Collections;
 public class PlayerController : MonoBehaviour {
 
 	public float speed;
-	public float jump_height;
+	public float jump_velocity;
 	public float offset_theta;
 	public float height_offset;
 
@@ -45,9 +45,17 @@ public class PlayerController : MonoBehaviour {
 			FallDownward();
 		}
 
-		transform.position += velocity;
-		correctHeight();
+		UpdateTransform();
+	}
 
+	void UpdateTransform(){
+		// Tie the velocity to the timestep making it framerate independent
+		transform.position = PositionAfterVelocity(velocity);
+		correctHeight();
+	}
+
+	Vector3 PositionAfterVelocity(Vector3 v){
+		return transform.position + (v * Time.deltaTime);
 	}
 
 	Vector2 MouseVectorToWorld(){
@@ -58,11 +66,16 @@ public class PlayerController : MonoBehaviour {
 			((Input.mousePosition.y / Screen.height) - 0.5f) / 0.5f
 		);
 
-		// Transform this vector into world coordinates using the rotation from the orthographcis projection
+		// Transform this vector into world coordinates using the rotation from the orthographic projection
 		Vector3 worldMovement = new Vector2(
 			(screenMovement.x * cosTheta) + (screenMovement.y * sinTheta),
 			(screenMovement.x * -1.0f * sinTheta) + (screenMovement.y * cosTheta)
 		);
+
+		// You can also
+		// return worldMovement;
+		// or for toggling movement
+		// return worldMovement.normalized;
 
 		// Make it so the maximum (1.0f * speed) is reached at 0.5 rather than at 1.0
 		Vector2 NormalizedMovement = new Vector2(
@@ -71,29 +84,27 @@ public class PlayerController : MonoBehaviour {
 		);
 
 		return NormalizedMovement;
-
 	}
 
 	void HandleMouseInput(){
 		// Get the top-down (2D) velocity vector
 		Vector2 velocity2D = MouseVectorToWorld() * speed;
 
-		Vector3 temp_position = new Vector3(
-			velocity2D.x + transform.position.x,
-			transform.position.y,
-			velocity2D.y + transform.position.z
-		);
+		// Predict the point next step
+		Vector3 position_next = PositionAfterVelocity(new Vector3(velocity2D.x, 0.0f, velocity2D.y));
 
 		// Cast a ray downward from where we're going to be
 		RaycastHit hit;
-		if(Physics.Raycast(temp_position, Vector3.down, out hit, height_offset + 0.3f)){
-			// We've hit the ground! Clamp to it
+		if(Physics.Raycast(position_next, Vector3.down, out hit, height_offset + 0.3f)){
+			// We will be hitting the ground, therefore we should clamp to it
 			is_grounded = true;
+
+			float vert_velocity = (hit.point.y - transform.position.y + height_offset)/Time.deltaTime;
 
 			// TODO change the x/z velocities to be scalar of the amount traveled upward
 			velocity = new Vector3(
 				velocity2D.x,
-				hit.point.y - transform.position.y + height_offset,
+				vert_velocity,
 				velocity2D.y
 			);
 		} else {
@@ -107,21 +118,21 @@ public class PlayerController : MonoBehaviour {
 
 	void FallDownward(){
 		// Fall downward in addition to any of the other current velocities
-		velocity = new Vector3(velocity.x, velocity.y - 0.01f, velocity.z);
+		velocity = new Vector3(velocity.x, velocity.y - 0.3f, velocity.z);
 
 		UpdateIsGrounded();
 	}
 
 	void HandleSpacePressed(){
 		// Jump upward!
-		velocity = new Vector3(velocity.x, jump_height, velocity.z);
+		velocity = new Vector3(velocity.x, jump_velocity, velocity.z);
 
 		UpdateIsGrounded();
 	}
 
 	void UpdateIsGrounded(){
 		// Detect if we're going to hit the ground next step
-		is_grounded = Physics.Raycast(transform.position, Vector3.down, (velocity.y * -1.0f) + height_offset);
+		is_grounded = Physics.Raycast(transform.position, Vector3.down, (velocity.y * -1.0f * Time.deltaTime) + height_offset);
 	}
 
 	void correctHeight(){
