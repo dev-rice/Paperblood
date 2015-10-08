@@ -56,23 +56,27 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	Vector2 MouseVectorToWorld(){
+		// Convert mouseposition into vector originating from 1/2 width, 1/2 height
+		// With bounds -1.0 < x < 1.0 and -1.0 < y < 1.0
 		Vector2 screenMovement = new Vector2(
 			((Input.mousePosition.x / Screen.width) - 0.5f) / 0.5f,
 			((Input.mousePosition.y / Screen.height) - 0.5f) / 0.5f
 		);
 
+		// Transform this vector into world coordinates using the rotation from the orthographcis projection
 		Vector3 worldMovement = new Vector2(
 			(screenMovement.x * cosTheta) + (screenMovement.y * sinTheta),
 			(screenMovement.x * -1.0f * sinTheta) + (screenMovement.y * cosTheta)
 		);
 
-		// Uncomment me for on/off movement
-		// return worldMovement.normalized;
+		// Make it so the maximum (1.0f * speed) is reached at 0.5 rather than at 1.0
+		Vector2 NormalizedMovement = new Vector2(
+			Mathf.Max(Mathf.Min(worldMovement.x * 2, 1.0f), -1.0f),
+			Mathf.Max(Mathf.Min(worldMovement.y * 2, 1.0f), -1.0f)
+		);
 
-		// Uncomment me for gradient movement
-		return worldMovement;
+		return NormalizedMovement;
 
-		// TODO better movement vector
 	}
 
 	void HandleMouseInput(){
