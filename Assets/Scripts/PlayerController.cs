@@ -38,6 +38,8 @@ public class PlayerController : MonoBehaviour {
 				shouldZeroVelocity = false;
 			}
 
+			// All abilities and attacks go here
+
 			if(shouldZeroVelocity){
 				ZeroVelocity();
 			}
@@ -50,7 +52,25 @@ public class PlayerController : MonoBehaviour {
 
 	void UpdateTransform(){
 		// Tie the velocity to the timestep making it framerate independent
-		transform.position = PositionAfterVelocity(velocity);
+		Vector3 next_position = PositionAfterVelocity(velocity);
+
+		// Handle collisions sideways
+		RaycastHit wall_hit;
+		if(Physics.Raycast(transform.position, velocity, out wall_hit, (velocity.magnitude * Time.deltaTime) + 1.0f)){
+
+			Vector3 moveVector = wall_hit.point - transform.position;
+			float magnitude = Mathf.Max(moveVector.magnitude - 1.0f, 0.0f);
+			moveVector = Vector3.ClampMagnitude(moveVector, magnitude);
+
+			next_position = new Vector3(
+				transform.position.x + moveVector.x,
+				next_position.y,
+				next_position.z + moveVector.z
+			);
+		}
+
+		// Apply everything!
+		transform.position = next_position;
 		correctHeight();
 	}
 
@@ -94,19 +114,21 @@ public class PlayerController : MonoBehaviour {
 		Vector3 position_next = PositionAfterVelocity(new Vector3(velocity2D.x, 0.0f, velocity2D.y));
 
 		// Cast a ray downward from where we're going to be
-		RaycastHit hit;
-		if(Physics.Raycast(position_next, Vector3.down, out hit, height_offset + 0.3f)){
+		RaycastHit ground_hit;
+		if(Physics.Raycast(position_next, Vector3.down, out ground_hit, height_offset + 0.3f)){
 			// We will be hitting the ground, therefore we should clamp to it
 			is_grounded = true;
 
-			float vert_velocity = (hit.point.y - transform.position.y + height_offset)/Time.deltaTime;
+			float vert_velocity = (ground_hit.point.y - transform.position.y + height_offset)/Time.deltaTime;
 
 			// TODO change the x/z velocities to be scalar of the amount traveled upward
-			velocity = new Vector3(
+			Vector3 temp_velocity = new Vector3(
 				velocity2D.x,
 				vert_velocity,
 				velocity2D.y
 			);
+
+			velocity = temp_velocity;
 		} else {
 			is_grounded = false;
 		}
