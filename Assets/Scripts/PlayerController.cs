@@ -4,10 +4,12 @@ using System.Collections;
 public class PlayerController : MonoBehaviour {
 
 	public float speed;
+	public float jump_height;
 	public float offset_theta;
 	public float height_offset;
 
 	private bool is_grounded;
+	private bool[] keyspressed;
 	private float cosTheta;
 	private float sinTheta;
 	private Vector3 velocity;
@@ -20,46 +22,33 @@ public class PlayerController : MonoBehaviour {
 
 		// We start on the ground
 		is_grounded = true;
+
+		// Initialize array
+		keyspressed = new bool[128];
 	}
 
 	void FixedUpdate(){
 
+		UpdateInputKeys();
+
 		if(is_grounded){
+			bool shouldZeroVelocity = true;
+
 			if(Input.GetButton("Fire2")){
-				// Get the top-down (2D) velocity vector
-				Vector2 velocity2D = MouseVectorToWorld() * speed;
-				Vector3 temp_position = new Vector3(
-					velocity2D.x + transform.position.x,
-					transform.position.y,
-					velocity2D.y + transform.position.z
-				);
+				HandleMouseInput();
+				shouldZeroVelocity = false;
+			}
 
-				// Cast a ray downward from where we're going to be
-				RaycastHit hit;
-				if(Physics.Raycast(temp_position, Vector3.down, out hit, height_offset + 0.3f)){
-					// We've hit the ground! Clamp to it
-					is_grounded = true;
+			if(keyspressed[' ']) {
+				HandleSpacePressed();
+				shouldZeroVelocity = false;
+			}
 
-					// TODO change the x/z velocities to be scalar of the amount traveled upward
-					velocity = new Vector3(
-						velocity2D.x,
-						hit.point.y - transform.position.y + height_offset,
-						velocity2D.y
-					);
-				} else {
-					is_grounded = false;
-				}
-
-			} else {
-				// Stop since we're on the ground
-				velocity = new Vector3(0.0f, 0.0f, 0.0f);
+			if(shouldZeroVelocity){
+				ZeroVelocity();
 			}
 		} else {
-			// Fall downward in addition to any of the other velocities
-			velocity = new Vector3(velocity.x, velocity.y - 0.01f, velocity.z);
-
-			// Detect if we're going to hit the ground next step
-			is_grounded = Physics.Raycast(transform.position, Vector3.down, (velocity.y * -1.0f) + height_offset);
+			FallDownward();
 		}
 
 		transform.position += velocity;
@@ -77,7 +66,72 @@ public class PlayerController : MonoBehaviour {
 			(screenMovement.x * -1.0f * sinTheta) + (screenMovement.y * cosTheta)
 		);
 
-		return worldMovement.normalized;
+		// Uncomment me for on/off movement
+		// return worldMovement.normalized;
+
+		// Uncomment me for gradient movement
+		return worldMovement;
+
+		// TODO better movement vector
+	}
+
+	void HandleMouseInput(){
+		// Get the top-down (2D) velocity vector
+		Vector2 velocity2D = MouseVectorToWorld() * speed;
+		Vector3 temp_position = new Vector3(
+			velocity2D.x + transform.position.x,
+			transform.position.y,
+			velocity2D.y + transform.position.z
+		);
+
+		// Cast a ray downward from where we're going to be
+		RaycastHit hit;
+		if(Physics.Raycast(temp_position, Vector3.down, out hit, height_offset + 0.3f)){
+			// We've hit the ground! Clamp to it
+			is_grounded = true;
+
+			// TODO change the x/z velocities to be scalar of the amount traveled upward
+			velocity = new Vector3(
+				velocity2D.x,
+				hit.point.y - transform.position.y + height_offset,
+				velocity2D.y
+			);
+		} else {
+			is_grounded = false;
+		}
+	}
+
+	void ZeroVelocity(){
+		velocity = new Vector3(0.0f, 0.0f, 0.0f);
+	}
+
+	void FallDownward(){
+		// Fall downward in addition to any of the other current velocities
+		velocity = new Vector3(velocity.x, velocity.y - 0.01f, velocity.z);
+
+		UpdateIsGrounded();
+	}
+
+	void HandleSpacePressed(){
+		// Jump upward!
+		velocity = new Vector3(velocity.x, jump_height, velocity.z);
+
+		UpdateIsGrounded();
+	}
+
+	void UpdateIsGrounded(){
+		// Detect if we're going to hit the ground next step
+		is_grounded = Physics.Raycast(transform.position, Vector3.down, (velocity.y * -1.0f) + height_offset);
+	}
+
+	void UpdateInputKeys(){
+		for(int i = 0; i < 128; i++){
+			keyspressed[i] = false;
+		}
+
+		foreach(char c in Input.inputString){
+			keyspressed[(int)c] = true;
+		}
 	}
 
 }
