@@ -26,16 +26,19 @@ public class PlayerController : MonoBehaviour {
 	void FixedUpdate(){
 
 		if(is_grounded){
-			bool shouldZeroVelocity = true;
+			bool shouldZeroVelocity = false;
 
 			if(Input.GetButton("Fire2")){
 				HandleMouseInput();
-				shouldZeroVelocity = false;
 			}
 
 			if(Input.GetKeyDown("space")) {
 				HandleSpacePressed();
-				shouldZeroVelocity = false;
+			}
+
+			if(Input.GetButton("Fire1")){
+				// Attacks always stop the player
+				shouldZeroVelocity = true;
 			}
 
 			// All abilities and attacks go here
