@@ -5,7 +5,6 @@ public class PlayerController : MonoBehaviour {
 
 	public float speed;
 	public float jump_velocity;
-	public float offset_theta;
 	public float height_offset;
 
 	private bool is_grounded;
@@ -15,7 +14,7 @@ public class PlayerController : MonoBehaviour {
 
 	void Start(){
 		// Precalculate the cos and sin of the world offset
-		float theta_rads = offset_theta * Mathf.PI / 180.0f;
+		float theta_rads = 315.0f /* Degrees */ * Mathf.PI / 180.0f;
 		cosTheta = Mathf.Cos(theta_rads);
 		sinTheta = Mathf.Sin(theta_rads);
 
@@ -56,12 +55,11 @@ public class PlayerController : MonoBehaviour {
 		Vector3 next_position = PositionAfterVelocity(velocity);
 
 		// Handle collisions sideways
-		RaycastHit wall_hit;
-		if(Physics.Raycast(transform.position, velocity, out wall_hit, (velocity.magnitude * Time.deltaTime) + 1.0f)){
-
-			Vector3 projected = wall_hit.normal * Vector3.Dot(velocity, wall_hit.normal);
-			velocity -= projected;
-			next_position = PositionAfterVelocity(velocity);
+		if(Physics.Raycast(next_position, Vector3.forward, 1.0f) || Physics.Raycast(next_position, Vector3.back, 1.0f)){
+			next_position.z = transform.position.z;
+		}
+		if(Physics.Raycast(next_position, Vector3.right, 1.0f) || Physics.Raycast(next_position, Vector3.left, 1.0f)){
+			next_position.x = transform.position.x;
 		}
 
 		// Apply everything!
@@ -70,6 +68,7 @@ public class PlayerController : MonoBehaviour {
 	}
 
 	void CorrectVelocity(){
+		// Fixes a VERY rare bug (seen once) that causes you to fly upward very fast
 		velocity = new Vector3(velocity.x, Mathf.Min(velocity.y, jump_velocity), velocity.z);
 	}
 
@@ -132,14 +131,13 @@ public class PlayerController : MonoBehaviour {
 			float x_velocity = velocity2D.x * Mathf.Cos(Mathf.Deg2Rad * theta_x);
 			float z_velocity = velocity2D.y * Mathf.Cos(Mathf.Deg2Rad * theta_z);
 
-			// TODO change the x/z velocities to be scalar of the amount traveled upward
-			Vector3 temp_velocity = new Vector3(
+			velocity = new Vector3(
 				x_velocity,
 				y_velocity,
 				z_velocity
 			);
 
-			velocity = temp_velocity;
+			// TODO rotate the guy to face the correct direction
 		} else {
 			is_grounded = false;
 		}
