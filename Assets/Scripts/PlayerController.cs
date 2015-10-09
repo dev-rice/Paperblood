@@ -26,14 +26,16 @@ public class PlayerController : MonoBehaviour {
 	void FixedUpdate(){
 
 		if(is_grounded){
-			bool shouldZeroVelocity = false;
+			bool shouldZeroVelocity = true;
 
 			if(Input.GetButton("Fire2")){
 				HandleMouseInput();
+				shouldZeroVelocity = false;
 			}
 
 			if(Input.GetKeyDown("space")) {
 				HandleSpacePressed();
+				shouldZeroVelocity = false;
 			}
 
 			if(Input.GetButton("Fire1")){
