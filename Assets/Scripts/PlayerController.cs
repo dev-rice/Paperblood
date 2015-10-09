@@ -55,22 +55,19 @@ public class PlayerController : MonoBehaviour {
 		Vector3 next_position = PositionAfterVelocity(velocity);
 
 		// Handle collisions sideways
-		// PHYSICS IS SHITTY ALKSJDLKJSD
-		// RaycastHit wall_hit;
-		// if(Physics.Raycast(transform.position, velocity, out wall_hit, (velocity.magnitude * Time.deltaTime) + 1.0f)){
-		//
-		// 	Vector3 projected = wall_hit.normal * Vector3.Dot(velocity, wall_hit.normal);
-		// 	velocity -= projected;
-		// 	next_position = PositionAfterVelocity(velocity);
-		// }
-		//
-		// if(Physics.Raycast(next_position, Vector3.forward, 1.0f) || Physics.Raycast(next_position, Vector3.back, 1.0f)){
-		// 	next_position.z = transform.position.z;
-		// }
-		//
-		// if(Physics.Raycast(next_position, Vector3.right, 1.0f) || Physics.Raycast(next_position, Vector3.left, 1.0f)){
-		// 	next_position.x = transform.position.x;
-		// }
+		RaycastHit wall_hit;
+		if(Physics.Raycast(transform.position, velocity, out wall_hit, (velocity.magnitude * Time.deltaTime) + 1.0f)){
+
+			Vector3 projected = wall_hit.normal.normalized * Vector3.Dot(velocity, wall_hit.normal);
+			velocity -= projected;
+			next_position = PositionAfterVelocity(velocity);
+		}
+
+		// If (+z or -z) and (+x or -x) gets a hit - corners!
+		if((Physics.Raycast(next_position, Vector3.forward, 1.0f) || Physics.Raycast(next_position, Vector3.back, 1.0f)) && (Physics.Raycast(next_position, Vector3.right, 1.0f) || Physics.Raycast(next_position, Vector3.left, 1.0f))){
+			next_position.z = transform.position.z;
+			next_position.x = transform.position.x;
+		}
 
 		// Apply everything!
 		transform.position = next_position;
