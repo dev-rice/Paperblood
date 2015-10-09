@@ -4,6 +4,7 @@ using System.Collections;
 public class PlayerController : MonoBehaviour {
 
 	public float speed;
+	public float turn_speed;
 	public float jump_velocity;
 	public float height_offset;
 
@@ -145,8 +146,17 @@ public class PlayerController : MonoBehaviour {
 			);
 
 			// Rotate the guy to face the direction of travel
-			float direction =  Mathf.Rad2Deg * Mathf.Atan2(x_velocity, z_velocity);
-			transform.rotation = Quaternion.AngleAxis(direction, Vector3.up);
+			Vector3 target = new Vector3(x_velocity, 0.0f, z_velocity);
+			Vector3 zero = Vector3.zero;
+
+			Vector3 direction = Vector3.SmoothDamp(
+				transform.forward,
+				target,
+				ref zero,
+				turn_speed
+			);
+
+			transform.LookAt(transform.position + direction);
 		} else {
 			is_grounded = false;
 		}
