@@ -144,7 +144,9 @@ public class PlayerController : MonoBehaviour {
 				z_velocity
 			);
 
-			// TODO rotate the guy to face the correct direction
+			// Rotate the guy to face the direction of travel
+			float direction =  Mathf.Rad2Deg * Mathf.Atan2(x_velocity, z_velocity);
+			transform.rotation = Quaternion.AngleAxis(direction, Vector3.up);
 		} else {
 			is_grounded = false;
 		}
