@@ -1,6 +1,6 @@
 fileFormatVersion: 2
 guid: a929e830dc644d9439c49552f7568b1d
-timeCreated: 1444318032
+timeCreated: 1444516967
 licenseType: Free
 ModelImporter:
   serializedVersion: 18
@@ -9,7 +9,7 @@ ModelImporter:
     400000: //RootNode
     2300000: //RootNode
     3300000: //RootNode
-    4300000: Man
+    4300000: woman
     7400000: Default Take
     9500000: //RootNode
   materials:
