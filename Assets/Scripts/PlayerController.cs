@@ -39,7 +39,7 @@ public class PlayerController : MonoBehaviour {
 			}
 
 			if(Input.GetButton("Fire1")){
-				// Attacks always stop the player
+				// Attacks always stop the player for a little while
 				shouldZeroVelocity = true;
 			}
 
@@ -52,10 +52,14 @@ public class PlayerController : MonoBehaviour {
 			FallDownward();
 		}
 
-		UpdateTransform();
+		applyVelocityWithPhysics();
 	}
 
-	void UpdateTransform(){
+	//#################################################
+	// Physics functions
+	//#################################################
+
+	void applyVelocityWithPhysics(){
 		// Tie the velocity to the timestep making it framerate independent
 		CorrectVelocity();
 		Vector3 next_position = PositionAfterVelocity(velocity);
@@ -80,10 +84,38 @@ public class PlayerController : MonoBehaviour {
 		correctHeight();
 	}
 
+	void FallDownward(){
+		// Fall downward in addition to any of the other current velocities
+		velocity = new Vector3(velocity.x, velocity.y - 0.3f, velocity.z);
+
+		UpdateIsGrounded();
+	}
+
+	//#################################################
+	// Correction functions
+	//#################################################
+
 	void CorrectVelocity(){
-		// Fixes a VERY rare bug (seen once) that causes you to fly upward very fast
+		// Fixes a VERY rare bug (seen once) that causes you to fly upward very fast after a collision
 		velocity = new Vector3(velocity.x, Mathf.Min(velocity.y, jump_velocity), velocity.z);
 	}
+
+	void correctHeight(){
+		// Fixes slight clipping bug player has after falling
+		RaycastHit hit;
+
+		if(Physics.Raycast(transform.position, Vector3.down, out hit, height_offset + 0.3f) && velocity.y < 0){
+			transform.position = new Vector3(
+				transform.position.x,
+				hit.point.y + height_offset,
+				transform.position.z
+			);
+		}
+	}
+
+	//#################################################
+	// Helper functions
+	//#################################################
 
 	Vector3 PositionAfterVelocity(Vector3 v){
 		return transform.position + (v * Time.deltaTime);
@@ -116,6 +148,19 @@ public class PlayerController : MonoBehaviour {
 
 		return NormalizedMovement;
 	}
+
+	void ZeroVelocity(){
+		velocity = new Vector3(0.0f, 0.0f, 0.0f);
+	}
+
+	void UpdateIsGrounded(){
+		// Detect if we're going to hit the ground next step
+		is_grounded = Physics.Raycast(transform.position, Vector3.down, (velocity.y * -1.0f * Time.deltaTime) + height_offset);
+	}
+
+	//#################################################
+	// Input Handlers
+	//#################################################
 
 	void HandleMouseInput(){
 		// Get the top-down (2D) velocity vector
@@ -167,40 +212,11 @@ public class PlayerController : MonoBehaviour {
 		}
 	}
 
-	void ZeroVelocity(){
-		velocity = new Vector3(0.0f, 0.0f, 0.0f);
-	}
-
-	void FallDownward(){
-		// Fall downward in addition to any of the other current velocities
-		velocity = new Vector3(velocity.x, velocity.y - 0.3f, velocity.z);
-
-		UpdateIsGrounded();
-	}
-
 	void HandleSpacePressed(){
 		// Jump upward!
 		velocity = new Vector3(velocity.x, jump_velocity, velocity.z);
 
 		UpdateIsGrounded();
-	}
-
-	void UpdateIsGrounded(){
-		// Detect if we're going to hit the ground next step
-		is_grounded = Physics.Raycast(transform.position, Vector3.down, (velocity.y * -1.0f * Time.deltaTime) + height_offset);
-	}
-
-	void correctHeight(){
-		// Fixes slight clipping bug player has after falling
-		RaycastHit hit;
-
-		if(Physics.Raycast(transform.position, Vector3.down, out hit, height_offset + 0.3f) && velocity.y < 0){
-			transform.position = new Vector3(
-				transform.position.x,
-				hit.point.y + height_offset,
-				transform.position.z
-			);
-		}
 	}
 
 }
